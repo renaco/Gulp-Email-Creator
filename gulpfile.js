@@ -12,6 +12,8 @@ var util = require('gulp-util');
 var nodemailer = require('nodemailer');
 var fs = require('fs');
 var html_strip = require('htmlstrip-native');
+var htmlmin = require('gulp-htmlmin');
+var sanitizeHtml = require('gulp-sanitize-html');
 
 // Include the config
 var config = require('./config.json');
@@ -30,8 +32,7 @@ gulp.task('sass', function() {
 gulp.task('browser-sync', function() {
     browserSync({
         server: {
-            baseDir: "./output",
-            index: "test-template.html"
+            baseDir: "./output"
         },
         open: "external",
         logPrefix: "Gulp Email Creator"
@@ -43,6 +44,20 @@ gulp.task('build', function() {
     return gulp.src('src/html/*.html')
         .pipe(inlinesource())
         .pipe(inline(config.APIKEY, false))
+        .pipe(htmlmin({
+          collapseWhitespace: true, 
+          removeComments: true,
+          removeEmptyAttributes: true
+        }))
+        .pipe(sanitizeHtml.transform({
+          allowedTags: [ 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
+            'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
+            'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre', 'img', 'style' ],
+          allowedAttributes: {
+            '*': [ 'href', 'align', 'alt', 'bgcolor', 'cellpadding', 'cellspacing', 'center', 'colspan', 'height', 'valign', 'style', 'type', 'width', 'src' ],
+            img: [ 'src' ]
+          }
+        }))
         .pipe(gulp.dest('./output'))
         .pipe(reload({stream:true}));
 });
